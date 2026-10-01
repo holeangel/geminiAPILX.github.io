@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Gemini Key池管理面板</title>
+</head>
+<body>
+    <h2>🔑 Gemini API Key 管理面板</h2>
+    <div>
+        <label>管理员密码：</label>
+        <input type="password" id="adminPwd" placeholder="输入管理员密码">
+        <button onclick="loadKeys()">刷新Key列表</button>
+    </div>
+    <h3>当前Key列表</h3>
+    <div id="keyList"></div>
+
+    <h3>新增API Key</h3>
+    <input type="text" id="newKey" placeholder="粘贴Gemini Apikey">
+    <button onclick="addKey()">添加</button>
+
+<script>
+const API_HOST = "https://apilx.wenchen.dpdns.org";
+
+async function loadKeys(){
+    const pwd = document.getElementById("adminPwd").value;
+    const res = await fetch(`${API_HOST}/api/getKeys`, {
+        headers: {"x-admin-pwd": pwd}
+    });
+    const data = await res.json();
+    const div = document.getElementById("keyList");
+    div.innerHTML = "";
+    if(!Array.isArray(data)){
+        div.innerHTML = `<p style="color:red">${data.msg}</p>`;
+        return;
+    }
+    data.forEach(k=>{
+        div.innerHTML += `
+        <div>${k}
+        <button onclick="delKey('${k}')">删除</button>
+        </div>`;
+    })
+}
+
+async function addKey(){
+    const pwd = document.getElementById("adminPwd").value;
+    const key = document.getElementById("newKey").value.trim();
+    const res = await fetch(`${API_HOST}/api/addKey`,{
+        method:"POST",
+        headers:{"x-admin-pwd":pwd,"Content-Type":"application/json"},
+        body:JSON.stringify({key})
+    })
+    const ret = await res.json();
+    alert(ret.msg);
+    loadKeys();
+}
+
+async function delKey(key){
+    const pwd = document.getElementById("adminPwd").value;
+    if(!confirm("确认删除这个key？")) return;
+    const res = await fetch(`${API_HOST}/api/delKey`,{
+        method:"POST",
+        headers:{"x-admin-pwd":pwd,"Content-Type":"application/json"},
+        body:JSON.stringify({key})
+    })
+    const ret = await res.json();
+    alert(ret.msg);
+    loadKeys();
+}
+</script>
+</body>
+</html>
